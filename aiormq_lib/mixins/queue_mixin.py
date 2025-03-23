@@ -22,6 +22,7 @@ class QueueMixin(AbstractConnectionMixin):
     ):
         """Send a message to a queue."""
         try:
+            await self.create_queue(queue_name)
             await self.channel.default_exchange.publish(
                 Message(
                     headers=headers,
@@ -38,6 +39,7 @@ class QueueMixin(AbstractConnectionMixin):
     ):
         """Send a message to a single Dead Letter Queue (DLQ) with original queue info."""
         try:
+            await self.create_queue("dlq")
             message.headers = message.headers or {}
             message.headers["error_timestamp"] = datetime.now().isoformat()
             message.headers["original_queue"] = queue_name

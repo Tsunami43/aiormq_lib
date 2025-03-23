@@ -116,8 +116,6 @@ class ListenerMixin(AbstractListenerMixin, AbstractQueueMixin):
         """🎧 Listen to a queue."""
         queue: Queue = await self.create_queue(listener.queue_name)
 
-        await self.create_queue(f"dlq")
-
         async with queue.iterator() as queue_iter:
             async for message in queue_iter:
                 # Begin processing message
