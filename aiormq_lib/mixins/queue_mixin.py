@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Optional
 
 from ..abc.connection import AbstractConnectionMixin
@@ -32,11 +33,15 @@ class QueueMixin(AbstractConnectionMixin):
         except Exception as e:
             raise QueueSendError(e)
 
-    async def send_to_dlq(self, queue_name: str, message: Message):
+    async def send_to_dlq(
+        self, queue_name: str, message: Message, error: Optional[str] = None
+    ):
         """Send a message to a single Dead Letter Queue (DLQ) with original queue info."""
         try:
             message.headers = message.headers or {}
+            message.headers["error_timestamp"] = datetime.now().isoformat()
             message.headers["original_queue"] = queue_name
+            message.headers["error"] = error
             await self.channel.default_exchange.publish(message, routing_key="dlq")
         except Exception as e:
             raise QueueSendError(f"Failed to send message to DLQ: {e}")

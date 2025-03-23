@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from ..models import Queue
 
@@ -15,6 +16,6 @@ class AbstractQueueMixin(ABC):
         raise NotImplementedError("Method send_message is not implemented.")
 
     @abstractmethod
-    async def send_to_dlq(self, queue_name: str, message):
+    async def send_to_dlq(self, queue_name: str, message, error: Optional[str] = None):
         """Method for sending messages to a Dead Letter Queue."""
         raise NotImplementedError("Method send_to_dlq is not implemented.")

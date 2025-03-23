@@ -6,7 +6,11 @@ from ..models import IncomingMessage
 from ..abc.listener import AbstractListenerMixin
 from ..abc.queue import AbstractQueueMixin
 from ..models import Listener, BaseFilter, QueueHandler, Queue
-from ..exceptions import FilterException
+from ..exceptions import (
+    FilterException,
+    ListenerAlreadyExistsError,
+    NotFoundHandlerException,
+)
 
 
 class ListenerMixin(AbstractListenerMixin, AbstractQueueMixin):
@@ -23,6 +27,11 @@ class ListenerMixin(AbstractListenerMixin, AbstractQueueMixin):
             listener_exists = False
             for listener in self.listeners:
                 if listener.queue_name == queue_name:
+                    for handler in listener.handlers:
+                        if handler.func.__name__ == func.__name__:
+                            raise ListenerAlreadyExistsError(
+                                f"Listener {func.__name__} already exists."
+                            )
                     listener.handlers.append(QueueHandler(func, list(filters)))
                     listener_exists = True
                     break
@@ -70,6 +79,11 @@ class ListenerMixin(AbstractListenerMixin, AbstractQueueMixin):
         listener_exists = False
         for listener in self.listeners:
             if listener.queue_name == queue_name:
+                for handler in listener.handlers:
+                    if handler.func.__name__ == func.__name__:
+                        raise ListenerAlreadyExistsError(
+                            f"Listener {func.__name__} already exists."
+                        )
                 listener.handlers.append(QueueHandler(func, list(filters)))
                 listener_exists = True
                 break
@@ -109,19 +123,21 @@ class ListenerMixin(AbstractListenerMixin, AbstractQueueMixin):
             async for message in queue_iter:
                 # Begin processing message
                 async with message.process():
-                    message_handled = False
-
-                    for handler in listener.handlers:
-                        try:
-                            for filter_obj in handler.filters:
-                                if not await filter_obj(message):  # type: ignore
-                                    raise FilterException("Filter failed")
-
-                            await handler.func(queue, message)
-                            message_handled = True
-                            break
-                        except FilterException:
-                            continue
-
-                    if not message_handled:
-                        await self.send_to_dlq(listener.queue_name, message)
+                    message_handle = False
+                    try:
+                        for handler in listener.handlers:
+                            try:
+                                for filter_obj in handler.filters:
+                                    if not await filter_obj(message):  # type: ignore
+                                        raise FilterException("Filter failed")
+                                await handler.func(queue, message)
+                                message_handle = True
+                                break
+                            except FilterException:
+                                continue
+                        if not message_handle:
+                            raise NotFoundHandlerException("Handler not found")
+                    except Exception as e:
+                        await self.send_to_dlq(
+                            listener.queue_name, message, error=str(e)
+                        )

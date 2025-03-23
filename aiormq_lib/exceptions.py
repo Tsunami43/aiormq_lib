@@ -16,3 +16,11 @@ class APIFetchQueuesError(Exception):
 
 class RouterDuplicationError(Exception):
     pass
+
+
+class NotFoundHandlerException(Exception):
+    pass
+
+
+class ListenerAlreadyExistsError(Exception):
+    pass
