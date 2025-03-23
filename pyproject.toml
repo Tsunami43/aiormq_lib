@@ -14,6 +14,8 @@ dependencies = [
     "aiohttp (>=3.11.14,<4.0.0)",
 ]
 
+[tool.poetry.urls]
+"Homepage" = "https://github.com/Tsunami43/aiormq_lib.git"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
