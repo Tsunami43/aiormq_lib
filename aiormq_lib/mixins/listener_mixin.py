@@ -1,8 +1,6 @@
 import asyncio
 from typing import Any, Callable
 
-from ..models import IncomingMessage
-
 from ..abc.listener import AbstractListenerMixin
 from ..abc.queue import AbstractQueueMixin
 from ..models import Listener, BaseFilter, QueueHandler, Queue
@@ -89,6 +87,7 @@ class ListenerMixin(AbstractListenerMixin, AbstractQueueMixin):
                 break
 
         if not listener_exists:
+            await self.create_queue(queue_name)
             listener = Listener(
                 queue_name=queue_name,
                 handler=QueueHandler(func, list(filters)),
