@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 
 
 class AbstractRabbitMQClient(ABC):
+    @property
+    def vhost(self) -> str:
+        raise NotImplementedError("Getter vhost is not implemented.")
 
     @property
     @abstractmethod

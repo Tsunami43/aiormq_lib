@@ -1,3 +1,4 @@
+from typing import Optional
 from .mixins.connection_mixin import ConnectionMixin
 from .mixins.queue_mixin import QueueMixin
 from .mixins.api_mixins import APIMixin
@@ -6,13 +7,26 @@ from .mixins.listener_mixin import ListenerMixin
 
 class RabbitMQClient(ConnectionMixin, QueueMixin, APIMixin, ListenerMixin):
     def __init__(
-        self, host: str, port: int, username: str, password: str, port_api: int = 15672
+        self,
+        host: str,
+        port: int,
+        username: str,
+        password: str,
+        vhost: Optional[str] = None,
+        port_api: int = 15672,
     ):
         self.__host = host
         self.__port = port
         self.__username = username
         self.__password = password
+        self.__vhost = vhost
         self.__port_api = port_api
+
+    @property
+    def vhost(self) -> str:
+        if self.__vhost is None:
+            return "/"
+        return "/" + self.__vhost
 
     @property
     def port_api(self) -> int:
@@ -36,4 +50,4 @@ class RabbitMQClient(ConnectionMixin, QueueMixin, APIMixin, ListenerMixin):
 
     @property
     def uri(self):
-        return f"amqp://{self.username}:{self.password}@{self.host}:{self.port}/"
+        return f"amqp://{self.username}:{self.password}@{self.host}:{self.port}{self.vhost}"
